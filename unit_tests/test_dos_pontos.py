@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append(".")
+
 from ..desafios.pontos import adiciona_pontos, remove_pontos
 
 
