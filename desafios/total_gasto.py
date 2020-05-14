@@ -27,7 +27,8 @@ class QueryFile:
         return data.split(";")
 
 
-query = QueryFile("data/data/ExecucaoFinanceira.csv")
-total = sum(dec(element, 5) for element in query)
+if __name__ == "__main__":
+    query = QueryFile("data/data/ExecucaoFinanceira.csv")
+    total = sum(dec(element, 5) for element in query)
 
-print("Total gasto: {}".format(total))
+    print("Total gasto: {}".format(total))

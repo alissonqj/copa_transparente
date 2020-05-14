@@ -16,12 +16,11 @@ def dec(element, index):
 
 with open("data/data/ExecucaoFinanceira.csv", "r") as data_file:
     splited_data = [line.split(";") for line in data_file]
-    print(splited_data[:3])
     data = [
         (element[0], dec(element, 5)) for element in splited_data if len(element) > 2
     ]
-    print(data)
+    # print(data[:3])
     result = [{key: value for key, value in zip(schema, element)} for element in data]
     print(result[:3])
-    for info_dict in result:
-        print("{}".format(info_dict))
+    # for info_dict in result:
+    #     print("{}".format(info_dict))

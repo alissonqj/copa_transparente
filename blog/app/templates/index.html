@@ -1,0 +1,12 @@
+<!-- Jinja 2 -->
+{% extends "base.html" %}
+
+{% block conteudo %}
+    <h1> Seja muito bem vindo, {{ user.username }}!</h1>
+
+    {% for post in posts %}
+    <div>
+        <p>{{ post.author.username }} diz: <b>{{ post.body }}</b></p>
+    </div>
+    {% endfor %}
+{% endblock %}
