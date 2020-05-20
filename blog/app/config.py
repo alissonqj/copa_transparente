@@ -4,7 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 # SQLITE
-# MYSQL, POSTGRES, ORACLE
+# MYSQL, POSTGRES, SQL SERVER
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "voce-nunca-adivinhara"
     SQLALCHEMY_DATABASE_URI = os.environ.get(
