@@ -1,23 +1,30 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import datetime
 
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm
-from app.models import User
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, EmptyForm, PostForm
+from app.models import User, Post
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
 
 
-@app.route("/")
-@app.route("/index")
+@app.route("/", methods=['GET', 'POST'])
+@app.route("/index", methods=['GET', 'POST'])
 @login_required
 def index():
-    posts = [
-        {"author": {"username": "Vinicius"}, "body": "Ótimo dia em Florianópolis"},
-        {"author": {"username": "Jaiminho"}, "body": "Dia chuvoso em Tamgamandápio"},
-    ]
-    return render_template("index.html", title="Página Inicial", posts=posts)
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(body=form.post.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Seu post agora está no ar!')
+        return redirect(url_for('index'))
+    page = request.args.get('page', 1, type=int)
+    posts = current_user.followed_posts().paginate(
+        page, app.config['POSTS_PER_PAGE'], False)
+    return render_template("index.html", title="Página Inicial", posts=posts.items, form=form)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -66,11 +73,9 @@ def register():
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = [
-        {"author": user, "body": "TEst post #1"},
-        {"author": user, "body": "test post #2"},
-    ]
-    return render_template("user.html", user=user, posts=posts)
+    posts = Post.query.filter_by(author=current_user).all()
+    form = EmptyForm()
+    return render_template("user.html", user=user, posts=posts, form=form)
 
 
 @app.before_request
@@ -83,7 +88,7 @@ def before_request():
 @app.route("/edit_profile", methods=["GET", "POST"])
 @login_required
 def edit_profile():
-    form = EditProfileForm()
+    form = EditProfileForm(current_user.username)
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.about_me = form.about_me.data
@@ -94,3 +99,52 @@ def edit_profile():
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
     return render_template("edit_profile.html", title="Edição de Perfil", form=form)
+
+
+@app.route('/follow/<username>', methods=['POST'])
+@login_required
+def follow(username):
+    form = EmptyForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('Usuário {} não encontrado.'.format(username))
+            return redirect(url_for('index'))
+        if user == current_user:
+            flash('Você não pode se seguir, néh cara?')
+            return redirect(url_for('user', username=user))
+        current_user.follow(user)
+        db.session.commit()
+        flash('Você está seguindo {}'.format(username))
+        return redirect(url_for('user', username=username))
+    else:
+        return redirect(url_for('index'))
+
+
+@app.route('/unfollow/<username>', methods=['POST'])
+@login_required
+def unfollow(username):
+    form = EmptyForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            flash('Usuário {} não encontrado.'.format(username))
+            return redirect(url_for('index'))
+        if user == current_user:
+            flash('Você não pode se seguir, néh cara?')
+            return redirect(url_for('user', username=username))
+        current_user.unfollow(user)
+        db.session.commit()
+        flash('Você não está mais seguindo {}.'.format(username))
+        return redirect(url_for('user', username=username))
+    else:
+        return redirect(url_for('index'))
+
+
+@app.route('/explore')
+@login_required
+def explore():
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.timestamp.desc()).paginate(
+        page, app.config['POSTS_PER_PAGE'], False)
+    return render_template('index.html', title='Explore', posts=posts.items)
