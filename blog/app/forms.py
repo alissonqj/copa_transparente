@@ -46,14 +46,30 @@ class EditProfileForm(FlaskForm):
         if username.data != self.original_username:
             user = User.query.filter_by(username=self.username.data).first()
             if user is not None:
-                raise ValidationError('Por favor, utilize um usuário diferente, esse já existe!')
+                raise ValidationError(
+                    "Por favor, utilize um usuário diferente, esse já existe!"
+                )
 
 
 class EmptyForm(FlaskForm):
-    submit = SubmitField('Submit')
+    submit = SubmitField("Submit")
 
 
 class PostForm(FlaskForm):
-    post = TextAreaField('Diga algo', validators=[
-        DataRequired(), Length(min=1, max=140)])
-    submit = SubmitField('Submit')
+    post = TextAreaField(
+        "Diga algo", validators=[DataRequired(), Length(min=1, max=140)]
+    )
+    submit = SubmitField("Submit")
+
+
+class ResetPasswordRequestForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    submit = SubmitField("Solicitar reset de senha")
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField("Senha", validators=[DataRequired(), Length(min=8)])
+    password2 = PasswordField(
+        "Repita a senha", validators=[DataRequired(), EqualTo("password")]
+    )
+    submit = SubmitField("Resete sua senha")

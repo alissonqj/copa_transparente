@@ -25,4 +25,9 @@
 </form>
 
 <p>Novo usuário? <a href="{{ url_for('register') }}">Clique aqui para se registrar!</a> </p>
+
+<p>
+    Esqueceu sua senha?
+    <a href="{{ url_for('reset_password_request') }}">Clique aqui para resetá-la</a>
+</p>
 {% endblock %}

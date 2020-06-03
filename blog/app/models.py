@@ -2,8 +2,10 @@
 
 from datetime import datetime
 from hashlib import md5
+from time import time
+import jwt
 
-from app import db, login
+from app import db, login, app
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -13,9 +15,9 @@ class ModeloComIdMixin:
 
 
 followers = db.Table(
-    'followers',
-    db.Column('follower_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
+    "followers",
+    db.Column("follower_id", db.Integer, db.ForeignKey("user.id")),
+    db.Column("followed_id", db.Integer, db.ForeignKey("user.id")),
 )
 
 
@@ -29,11 +31,12 @@ class User(db.Model, UserMixin, ModeloComIdMixin):
     # Followed -> Sendo seguido
     # Follower -> Seguindo alguém
     followed = db.relationship(
-        'User',
+        "User",
         secondary=followers,
         primaryjoin=("followers.c.follower_id == User.id"),
         secondaryjoin=("followers.c.followed_id == User.id"),
-        backref=db.backref('followers', lazy='dynamic'), lazy='dynamic',
+        backref=db.backref("followers", lazy="dynamic"),
+        lazy="dynamic",
     )
 
     def __repr__(self):
@@ -64,8 +67,8 @@ class User(db.Model, UserMixin, ModeloComIdMixin):
 
     def followed_posts(self):
         followed = Post.query.join(
-            followers, (followers.c.followed_id == Post.user_id)).filter(
-            followers.c.follower_id == self.id)
+            followers, (followers.c.followed_id == Post.user_id)
+        ).filter(followers.c.follower_id == self.id)
         own = Post.query.filter_by(user_id=self.id)
         return followed.union(own).order_by(Post.timestamp.desc())
 
@@ -79,6 +82,23 @@ class User(db.Model, UserMixin, ModeloComIdMixin):
         """
         resultado = db.session.execute(query)
         return resultado
+
+    def get_reset_password_token(self, expires_in=600):
+        return jwt.encode(
+            {"reset_password": self.id, "exp": time() + expires_in},
+            app.config["SECRET_KEY"],
+            algorithm="HS256",
+        ).decode("utf-8")
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            id = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])[
+                "reset_password"
+            ]
+        except Exception:  # InvalidSignatureError:
+            return
+        return User.query.get(id)
 
 
 class Post(db.Model, ModeloComIdMixin):
