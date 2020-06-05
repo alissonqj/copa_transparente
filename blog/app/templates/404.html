@@ -2,8 +2,10 @@
 
 {% block conteudo %}
 
-<h1>Página não encontrada</h1>
-<p>Por favor, volte ao início:
-<a href="{{ url_for('index')}}">Voltar</a></p>
+<h1>{{ _('Página não encontrada') }}</h1>
+<p>
+    {{ _('Por favor, volte ao início:') }}
+    <a href="{{ url_for('index')}}">{{ _('Voltar') }}</a>
+</p>
 
 {% endblock %}

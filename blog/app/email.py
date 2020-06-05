@@ -1,22 +1,13 @@
+from flask_mail import Message
 from flask import render_template
-from app import app
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from app import mail, app
 
 
 def send_mail(subject, sender, recipients, text_body, html_body):
-    try:
-        msg = Mail(
-            subject=subject,
-            from_email=sender,
-            to_emails=recipients,
-            html_content="<strong>and easy to do anywhere, even with Python</strong>",
-            # plain_text_content=text_body,
-        )
-        sg = SendGridAPIClient(app.config["SENDGRID_API_KEY"])
-        sg.send(msg)
-    except Exception as e:
-        raise e
+    msg = Message(subject, sender=sender, recipients=recipients)
+    msg.body = text_body
+    msg.html = html_body
+    mail.send(msg)
 
 
 def send_password_reset_email(user):

@@ -17,6 +17,8 @@ from app.models import User, Post
 from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.urls import url_parse
+from flask import g
+from flask_babel import get_locale
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -122,6 +124,7 @@ def before_request():
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
+    g.locale = str(get_locale())
 
 
 @app.route("/edit_profile", methods=["GET", "POST"])
